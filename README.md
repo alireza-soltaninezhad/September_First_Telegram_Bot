@@ -20,7 +20,7 @@
 
 ## About The Project
 
-September First's Appointment Bot is a Telegram bot aimed at streamlining the appointment-making process. It allows users to schedule appointments for various services including consultation for immigration and document verification.
+September First's Appointment Bot is a Telegram bot aimed at streamlining the appointment-making process. It allows users to schedule appointments for various services including consultation for immigration and document checking.
 
 Developed using Python, this bot integrates seamlessly with Google's APIs and various database options.
 
