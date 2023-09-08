@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Set Availability</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">Set Availability</h1>
+    <form action="/provider/availability" method="post" class="mt-4">
+      <div class="form-group">
+        <label for="provider_name">Provider Name:</label>
+        <input type="text" class="form-control" id="provider_name" name="provider_name" placeholder="Enter provider name">
+      </div>
+
+      <div class="form-group" id="timeFields">
+        <label for="start_time">Start Time:</label>
+        <input type="datetime-local" class="form-control" id="start_time" name="start_time">
+
+        <label for="end_time">End Time:</label>
+        <input type="datetime-local" class="form-control" id="end_time" name="end_time">
+      </div>
+
+      <div class="form-group">
+        <label for="type_of_appointment">Type of Appointment:</label>
+        <select class="form-control" id="type_of_appointment" name="type_of_appointment" onchange="toggleTimeFields()">
+          <option value="Consultation">Consultation</option>
+          <option value="Check Documents and Ask Questions">Check Documents and Ask Questions</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+
+  <script>
+    function toggleTimeFields() {
+      const typeOfAppointment = document.getElementById('type_of_appointment').value;
+      const timeFields = document.getElementById('timeFields');
+      if (typeOfAppointment === 'Consultation') {
+        timeFields.style.display = 'block';
+      } else {
+        timeFields.style.display = 'none';
+      }
+    }
+
+    // Call the function once to set the initial state
+    toggleTimeFields();
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>

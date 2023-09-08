@@ -1,0 +1,6 @@
+Flask==2.3.3
+Flask-SQLAlchemy==2.5.1
+python-telegram-bot==13.7
+google-auth==1.35.0
+google-auth-oauthlib==0.4.6
+google-api-python-client==2.24.0
