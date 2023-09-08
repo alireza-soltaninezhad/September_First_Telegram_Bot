@@ -27,8 +27,8 @@ Developed using Python, this bot integrates seamlessly with Google's APIs and va
 ### Team Members
 
 - **Alireza Soltani Nezhad** - Developer
-- **Amin Sinechi** - Service Provider
-- **Maryam** - Service Provider
+- **Amin Sinechi** - Service Provider and co founder 
+- **Maryam** - Service Provider and co founder
 - **Mahdis** - Service Provider
 
 ### Co-founder
@@ -52,7 +52,7 @@ You'll need to install the following packages to run this bot:
 
 1. Clone the repo:
     ```sh
-    git clone https://github.com/YourUsername/YourRepository.git
+    git clone https://github.com/alireza-soltaninezhad/September_First_Telegram_Bot
     ```
 2. Install the required packages:
     ```sh
@@ -67,7 +67,7 @@ Run the bot using the following command:
 python main.py
 ```
 
-For detailed usage instructions, please refer to our [Wiki](https://github.com/YourUsername/YourRepository/wiki).
+For detailed usage instructions, please refer to our [Wiki](https://github.com/alireza-soltaninezhad/September_First_Telegram_Bot).
 
 ## Contributing
 
