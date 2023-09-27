@@ -27,6 +27,8 @@ import pytz
 from jdatetime import date as jdate
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
@@ -64,33 +66,6 @@ class Appointment(db.Model):
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
 
-
-# def get_calendar_service():
-#     creds = None
-#     # The file token.pickle stores the user's access and refresh tokens, and is
-#     # created automatically when the authorization flow completes for the first
-#     # time.
-#     if os.path.exists('token.pickle'):
-#         with open('token.pickle', 'rb') as token:
-#             creds = pickle.load(token)
-#     # If there are no (valid) credentials available, let the user log in.
-#     if not creds or not creds.valid:
-#         if creds and creds.expired and creds.refresh_token:
-#             creds.refresh(Request())
-#         else:
-#             flow = InstalledAppFlow.from_client_secrets_file(
-#                 'client_secret.json', SCOPES)
-#             creds = flow.run_local_server(port=8080)  # Specify a fixed port number
-#         # Save the credentials for the next run
-#         with open('token.pickle', 'wb') as token:
-#             pickle.dump(creds, token)
-#
-#     try:
-#         service = build('calendar', 'v3', credentials=creds)
-#         return service
-#     except Exception as e:
-#         print(e)
-#         return None
 
 def convert_and_subtract_60_mins(dt_obj):
 
@@ -210,6 +185,8 @@ def send_email(user_data):
                 <br><br>
                 لطفا در صورت امکان عدم حضور در جلسه گپ و گفت، ۲۴ ساعت قبل با ریپلای به همین ایمیل به ما اطلاع بده.
                 <br><br>
+                همچنین لطفا فایل پیوست شده به این ایمیل رو مطالعه کن.
+                <br><br>
                 ممنون که بهمون کمک‌ می‌کنی که بهت کمک کنیم!
                 <br>
                 ارادتمند،
@@ -293,14 +270,22 @@ def send_email(user_data):
     message['From'] = smtp_username
     message['To'] = user_data['email']
 
-    # Connect to the SMTP server
+    with open("MaramName.pdf", "rb") as attachment:
+        pdf_part = MIMEBase("application", "octet-stream")
+        pdf_part.set_payload(attachment.read())
+        encoders.encode_base64(pdf_part)
+        pdf_part.add_header(
+            "Content-Disposition",
+            f"attachment; filename= {'MaramName.pdf'}",
+        )
+        message.attach(pdf_part)
+        print("PDF Read:)")
+
+    # Connect to the SMTP server and send the email
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
         server.login(smtp_username, smtp_password)
         server.send_message(message)
-
-    print('Email sent successfully to user!')
-
 
 
     if availability_type == 'Consultation':
@@ -487,114 +472,6 @@ def language_certificate(update: Update, context: CallbackContext) -> int:
     update.message.reply_text('اگر قصد داری این درخواست رو ثبت کنی روی /confirm کلیک کن، در غیر این صورت برای کنسل کردنش روی /cancel کلیک کن دقت کن که ممکنه قدری طول بکشه تا ایمیل رو دریافت کنی، لطفا بیش از یکبار روی confirm کلیک نکن و منتظر بمون!')
     return CONFIRM
 
-
-
-# def create_event(start_time, end_time, user_data):
-#     try:
-#         flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-#         creds = flow.run_local_server(port=8080)
-#         service = build('calendar', 'v3', credentials=creds)
-#
-#         start_time_str = start_time.strftime("%Y-%m-%dT%H:%M:%S")
-#         end_time_str = end_time.strftime("%Y-%m-%dT%H:%M:%S")
-#
-#         summary = user_data['name']
-#         description = f"Name: {user_data['name']}\nPhone: {user_data['phone']}\nGoal: {user_data['goal']}\nEmail: {user_data['email']}\nStatement of Purpose: {user_data['sop']}\nAim Countries: {user_data['country']}\nAge: {user_data['age']}\nLast Education Certificate: {user_data['education']}"
-#
-#         event = {
-#             'summary': summary,
-#             'description': description,
-#             'start': {
-#                 'dateTime': start_time_str,
-#                 'timeZone': 'Europe/Amsterdam',  # Timezone of the provider
-#             },
-#             'end': {
-#                 'dateTime': end_time_str,
-#                 'timeZone': 'Europe/Amsterdam',  # Timezone of the provider
-#             },
-#             'attendees': [
-#                 {'email': user_data['email']},  # User's email
-#             ],
-#             'reminders': {
-#                 'useDefault': False,
-#                 'overrides': [
-#                     {'method': 'email', 'minutes': 24 * 60},
-#                     {'method': 'popup', 'minutes': 10},
-#                 ],
-#             },
-#         }
-#
-#         event = service.events().insert(calendarId='primary', body=event).execute()
-#
-#         print(f'Event created: {event["htmlLink"]}')
-#     except Exception as e:
-#         print(f'An error occurred while creating the event: {e}')
-
-
-# def confirm(update: Update, context: CallbackContext) -> int:
-#     context.user_data['confirmation'] = update.message.text
-#     update.message.reply_text('ممنون ازینکه وقت گذاشتی! \nایمیلت رو چک کن، و اگر مدارکی قرار هست برامون بفرستی اونجا پیوست کن (جزئیاتش رو می‌تونی توی ایمیل بخونی). \nبه زودی باهات در ارتباط خواهیم بود! \nاگر قصد داری مجدد از بات در آینده استفاده کنی، کافیه روی /start کلیک کنی. ',
-#                               reply_markup=ReplyKeyboardRemove())
-#     send_email(context.user_data)
-#     # create_event(context.user_data['start_time'], context.user_data['end_time'], context.user_data)
-#
-#     # If user confirms, create an Appointment and delete the availability
-#     if context.user_data['confirmation'] == "/confirm":
-#         with app.app_context():
-#             # Delete the availability
-#             availability = Availability.query.get(context.user_data['availability_id'])  # Use availability_id
-#             if availability:
-#                 db.session.refresh(availability)  # Refresh the availability object before deleting
-#                 db.session.delete(availability)
-#                 db.session.commit()
-#
-#             # Create the appointment
-#             appointment = Appointment(user_id=update.effective_user.id,
-#                                       provider_id=context.user_data['provider_id'],
-#                                       start_time=context.user_data['start_time'],
-#                                       end_time=context.user_data['end_time'])
-#             db.session.add(appointment)
-#             db.session.commit()
-#     return ConversationHandler.END
-
-# def confirm(update: Update, context: CallbackContext) -> int:
-#     context.user_data['confirmation'] = update.message.text
-#     update.message.reply_text(
-#         'ممنون ازینکه وقت گذاشتی! \nایمیلت رو چک کن، و اگر مدارکی قرار هست برامون بفرستی اونجا پیوست کن (جزئیاتش رو می‌تونی توی ایمیل بخونی). \nبه زودی باهات در ارتباط خواهیم بود! \nاگر قصد داری مجدد از بات در آینده استفاده کنی، کافیه روی /start کلیک کنی. \n اگر ایمیل تایید رو دریافت نکردی لطفا سریع به ما از طریق ایمیل زیر اطلاع بده که مشکل رو حل کنیم! \n  support@septemberfirst.org',
-#         reply_markup=ReplyKeyboardRemove()
-#     )
-#
-#     try:
-#         send_email(context.user_data)
-#     except Exception as e:
-#         print(f"An error occurred while sending email: {e}")
-#         # Optionally, inform the user that the email could not be sent
-#         update.message.reply_text("An error occurred while sending the email. Please try again later.")
-#
-#     # create_event(context.user_data['start_time'], context.user_data['end_time'], context.user_data)
-#
-#     # If user confirms, create an Appointment and delete the availability
-#     if context.user_data['confirmation'] == "/confirm":
-#         with app.app_context():
-#             # Delete the availability
-#             availability = Availability.query.get(context.user_data['availability_id'])  # Use availability_id
-#             if availability:
-#                 db.session.refresh(availability)  # Refresh the availability object before deleting
-#                 db.session.delete(availability)
-#                 db.session.commit()
-#
-#             # Create the appointment
-#             appointment = Appointment(
-#                 user_id=update.effective_user.id,
-#                 provider_id=context.user_data['provider_id'],
-#                 start_time=context.user_data['start_time'],
-#                 end_time=context.user_data['end_time']
-#             )
-#             db.session.add(appointment)
-#             db.session.commit()
-#
-#     return ConversationHandler.END
-
 from sqlalchemy.exc import IntegrityError
 from telegram.ext import ConversationHandler, CallbackContext
 from telegram import Update, ReplyKeyboardRemove
@@ -712,8 +589,8 @@ def availability(update: Update, context: CallbackContext) -> int:
 
 
 def run_bot():
-    updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
-
+    # updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
+    updater = Updater("6037586217:AAEfPzmxgGFGIjknA73fq4tRC6IPTt0KYTs", use_context=True)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
