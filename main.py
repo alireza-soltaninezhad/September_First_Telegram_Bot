@@ -29,8 +29,14 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import json
+import os
+import hashlib
+import json
+from datetime import datetime
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+DB_FILE = "data.json"
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
@@ -65,6 +71,58 @@ class Appointment(db.Model):
     provider_id = db.Column(db.Integer, db.ForeignKey('service_provider.id'), nullable=False)
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
+
+def datetime_handler(x):
+    if isinstance(x, datetime.datetime):
+        return x.isoformat()
+    raise TypeError("Unknown type")
+
+def email_to_5_digit(email):
+    # Hash the email
+    result = hashlib.sha256(email.encode()).hexdigest()
+    # Use a portion of the hash to get a 5-digit number
+    number = int(result[:8], 16) % 100000  # Taking the first 8 characters of the hash and mod by 100000
+    return number
+
+
+def save_appointment(user_data):
+    client_id = email_to_5_digit(user_data['email'])
+    new_entry = {}
+    new_entry[client_id] = {
+        "Name": user_data['name'],
+        "Type of Appointment": user_data['availability_type'],
+        "Phone (Telegram Number)": user_data['phone'],
+        "Age": user_data['age'],
+        "Goal of making Appointment": user_data['goal'],
+        "Email": user_data['email'],
+        "Goal of Migration": user_data['sop'],
+        "Education Status": user_data['education'],
+        "Working Experience": user_data['working_experience'],
+        "Aim Countries": user_data['country'],
+        "Married Status": user_data['married_status'],
+        "Military Service Status": user_data['military_service'],
+        "Language Certificate": user_data['language_certificate'],
+        "Start Time": user_data['start_time'].strftime("%m/%d/%Y, %H:%M:%S"),
+        "End Time": user_data['end_time'].strftime("%m/%d/%Y, %H:%M:%S"),
+        "Service Provider": user_data['provider_name'],
+        "survey status": False
+    }
+
+    with open(DB_FILE, 'r+', encoding='utf-8') as file:
+        data = json.load(file)
+        data.append(new_entry)
+        file.seek(0)
+        json.dump(data, file, indent=4, ensure_ascii=False)
+        file.truncate()
+
+def retrieve_all_appointments():
+    with open(DB_FILE, 'r') as file:
+        return json.load(file)
+
+# If the database file doesn't exist, create it
+if not os.path.exists(DB_FILE):
+    with open(DB_FILE, 'w') as file:
+        json.dump([], file)
 
 
 def convert_and_subtract_60_mins(dt_obj):
@@ -368,9 +426,8 @@ def send_email(user_data):
         server.starttls()  # You can use server.login() if using SSL
         server.login(smtp_username, smtp_password)
         server.send_message(message2)
-
-
-
+    # save_appointment(user_data, availability_type, user_data['start_time'].strftime("%m/%d/%Y, %H:%M:%S"), user_data['end_time'].strftime("%m/%d/%Y, %H:%M:%S"))
+    save_appointment(user_data)
 
 
 def start(update: Update, context: CallbackContext) -> int:
@@ -653,6 +710,8 @@ def set_availability():
     db.session.commit()
 
     return 'Availability set successfully'
+
+
 
 
 def run_app():
