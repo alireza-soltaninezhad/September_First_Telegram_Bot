@@ -92,25 +92,45 @@ def email_to_5_digit(email):
 def save_appointment(user_data):
     client_id = email_to_5_digit(user_data['email'])
     new_entry = {}
-    new_entry[client_id] = {
-        "Name": user_data['name'],
-        "Type of Appointment": user_data['availability_type'],
-        "Phone (Telegram Number)": user_data['phone'],
-        "Age": user_data['age'],
-        "Goal of making Appointment": user_data['goal'],
-        "Email": user_data['email'],
-        "Goal of Migration": user_data['sop'],
-        "Education Status": user_data['education'],
-        "Working Experience": user_data['working_experience'],
-        "Aim Countries": user_data['country'],
-        "Married Status": user_data['married_status'],
-        "Military Service Status": user_data['military_service'],
-        "Language Certificate": user_data['language_certificate'],
-        "Start Time": user_data['start_time'].strftime("%m/%d/%Y, %H:%M:%S"),
-        "End Time": user_data['end_time'].strftime("%m/%d/%Y, %H:%M:%S"),
-        "Service Provider": user_data['provider_name'],
-        "survey status": False
-    }
+    if user_data['availability_type'] == 'Consultation':
+        new_entry[client_id] = {
+            "Name": user_data['name'],
+            "Type of Appointment": user_data['availability_type'],
+            "Phone (Telegram Number)": user_data['phone'],
+            "Age": user_data['age'],
+            "Goal of making Appointment": user_data['goal'],
+            "Email": user_data['email'],
+            "Goal of Migration": user_data['sop'],
+            "Education Status": user_data['education'],
+            "Working Experience": user_data['working_experience'],
+            "Aim Countries": user_data['country'],
+            "Married Status": user_data['married_status'],
+            "Military Service Status": user_data['military_service'],
+            "Language Certificate": user_data['language_certificate'],
+            "Start Time": user_data['start_time'].strftime("%m/%d/%Y, %H:%M:%S"),
+            "End Time": user_data['end_time'].strftime("%m/%d/%Y, %H:%M:%S"),
+            "Service Provider": user_data['provider_name'],
+            "survey status": False
+        }
+    else:
+        new_entry[client_id] = {
+            "Name": user_data['name'],
+            "Type of Appointment": user_data['availability_type'],
+            "Phone (Telegram Number)": user_data['phone'],
+            "Age": user_data['age'],
+            "Goal of making Appointment": user_data['goal'],
+            "Email": user_data['email'],
+            "Goal of Migration": user_data['sop'],
+            "Education Status": user_data['education'],
+            "Working Experience": user_data['working_experience'],
+            "Aim Countries": user_data['country'],
+            "Married Status": user_data['married_status'],
+            "Military Service Status": user_data['military_service'],
+            "Language Certificate": user_data['language_certificate'],
+            "Service Provider": user_data['provider_name'],
+            "survey status": False
+        }
+
 
     with open(DB_FILE, 'r+', encoding='utf-8') as file:
         data = json.load(file)
@@ -247,7 +267,7 @@ def send_email(user_data):
                 <br><br>
                 لطفا در صورت امکان عدم حضور در جلسه گپ و گفت، ۲۴ ساعت قبل با ریپلای به همین ایمیل به ما اطلاع بده.
                 <br><br>
-                همچنین لطفا فایل پیوست شده به این ایمیل رو مطالعه کن.
+                اعضای تیم ایستگاه یکم مرام‌نامه‌ای رو پذیرفتند که بر این مبنا رفتار خواهند کرد. این مرام‌نامه به این ایمیل پیوست شده و توصیه می‌کنیم مطالعه کنی.
                 <br><br>
                 ممنون که بهمون کمک‌ می‌کنی که بهت کمک کنیم!
                 <br>
@@ -312,7 +332,7 @@ def send_email(user_data):
                     <li>وضعیت تاهل: <span class="highlight">{user_data['married_status']}</span></li>
                     <li>وضعیت نظام وظیفه: <span class="highlight">{user_data['military_service']}</span></li>
                 </ul>
-
+                <p>اعضای تیم ایستگاه یکم مرام‌نامه‌ای رو پذیرفتند که بر این مبنا رفتار خواهند کرد. این مرام‌نامه به این ایمیل پیوست شده و توصیه می‌کنیم مطالعه کنی.</p>
                 <p>ممنون که بهمون کمک‌ می‌کنی که بهت کمک کنیم!</p>
 
                 <p>ارادتمند،<br>
@@ -651,7 +671,7 @@ def availability(update: Update, context: CallbackContext) -> int:
 
 def run_bot():
     # updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
-    updater = Updater("6037586217:AAEfPzmxgGFGIjknA73fq4tRC6IPTt0KYTs", use_context=True)
+    updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
