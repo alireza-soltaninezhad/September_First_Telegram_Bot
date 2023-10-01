@@ -34,9 +34,13 @@ import os
 import hashlib
 import json
 from datetime import datetime
+from flask_apscheduler import APScheduler
+import schedule
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 DB_FILE = "data.json"
+scheduler = APScheduler()
+FeedbackScheduler = APScheduler()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
@@ -50,7 +54,7 @@ smtp_port = 587
 smtp_username = 'support@septemberfirst.org'
 smtp_password = '#Septemberfirst2023'
 
-# Define your models
+
 class ServiceProvider(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -324,7 +328,7 @@ def send_email(user_data):
     # message.set_content(body)
     html = MIMEText(body, "html")
     message.attach(html)
-    message['Subject'] = "New Appointment"
+    message['Subject'] = f"New Appointment | Appointment ID {email_to_5_digit(user_data['email'])}"
     message['From'] = smtp_username
     message['To'] = user_data['email']
 
@@ -713,10 +717,56 @@ def set_availability():
 
 
 
+def remove_expired_availability():
+    with app.app_context():
+        # Current time
+        current_time = datetime.utcnow() + timedelta(minutes=120)
+
+        # Calculate the time 12 hours from now (or 10 minutes for testing)
+        time_threshold = current_time + timedelta(minutes=720)
+
+        print(f"Current Time (UTC): {current_time}")
+        print(f"Threshold Time (UTC): {time_threshold}")
+
+        # Find availabilities that are too close to the current time
+        soon_availabilities = Availability.query.filter(
+            and_(
+                Availability.start_time < time_threshold,
+                Availability.start_time > current_time
+            )
+        ).all()
+
+        print(f"Number of soon availabilities found: {len(soon_availabilities)}")
+
+        for availability in soon_availabilities:
+            print(f"Deleting availability with start_time: {availability.start_time}")
+            db.session.delete(availability)
+
+        # Commit changes to the database
+        db.session.commit()
+
+
+scheduler.add_job(
+    id='remove_expired_availability_job',
+    func=remove_expired_availability,
+    trigger='interval',
+    minutes=10,
+    timezone=pytz.utc
+)
+# FeedbackScheduler.add_job(
+#     id='FeedbackScheduler_job',
+#     func=remove_expired_availability,
+#     trigger='interval',
+#     minutes=10,
+#     timezone=pytz.utc
+#
+# )
 
 def run_app():
     with app.app_context():
         db.create_all()
+    scheduler.init_app(app)
+    scheduler.start()
     app.run(debug=False)
 
 
