@@ -1,4 +1,5 @@
 import os
+import pytz
 import re
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
@@ -12,10 +13,10 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from multiprocessing import Process
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+# from googleapiclient.discovery import build
+# from google_auth_oauthlib.flow import InstalledAppFlow
 import pickle
-from google.auth.transport.requests import Request
+# from google.auth.transport.requests import Request
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime, timedelta
@@ -36,10 +37,15 @@ import json
 from datetime import datetime
 from flask_apscheduler import APScheduler
 import schedule
+from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy import and_
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 DB_FILE = "data.json"
+
 scheduler = APScheduler()
+scheduler2 = BackgroundScheduler()
+
 FeedbackScheduler = APScheduler()
 
 app = Flask(__name__)
@@ -92,6 +98,9 @@ def email_to_5_digit(email):
 def save_appointment(user_data):
     client_id = email_to_5_digit(user_data['email'])
     new_entry = {}
+    amsterdam = pytz.timezone('Europe/Amsterdam')
+    current_time = datetime.now(amsterdam)
+    print(f"test the current_time, {current_time}")
     if user_data['availability_type'] == 'Consultation':
         new_entry[client_id] = {
             "Name": user_data['name'],
@@ -110,6 +119,7 @@ def save_appointment(user_data):
             "Start Time": user_data['start_time'].strftime("%m/%d/%Y, %H:%M:%S"),
             "End Time": user_data['end_time'].strftime("%m/%d/%Y, %H:%M:%S"),
             "Service Provider": user_data['provider_name'],
+            "client_id": client_id,
             "survey status": False
         }
     else:
@@ -128,6 +138,8 @@ def save_appointment(user_data):
             "Military Service Status": user_data['military_service'],
             "Language Certificate": user_data['language_certificate'],
             "Service Provider": user_data['provider_name'],
+            "Reserved Time": current_time.strftime("%m/%d/%Y, %H:%M:%S"),
+            "client_id": client_id,
             "survey status": False
         }
 
@@ -172,6 +184,9 @@ def convert_and_subtract_60_mins(dt_obj):
 
     return persian_datetime_str
 
+
+
+
 def send_email(user_data):
 
     provider_name = user_data['provider_name']
@@ -199,7 +214,6 @@ def send_email(user_data):
             <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
             <style>
                 body {{
-                    font-family: 'Tahoma', sans-serif;
                     background-color: #fafafa;
                 }}
                 .container {{
@@ -287,7 +301,6 @@ def send_email(user_data):
             <title>Appointment Confirmation</title>
             <style>
                 body {{
-                    font-family: 'Tahoma', sans-serif;
                 }}
                 .container {{
                     direction: rtl;
@@ -348,7 +361,7 @@ def send_email(user_data):
     # message.set_content(body)
     html = MIMEText(body, "html")
     message.attach(html)
-    message['Subject'] = f"New Appointment | Appointment ID {email_to_5_digit(user_data['email'])}"
+    message['Subject'] = f"New Appointment | Appointment ID {email_to_5_digit(user_data['email'])} | {provider_name}"
     message['From'] = smtp_username
     message['To'] = user_data['email']
 
@@ -372,68 +385,159 @@ def send_email(user_data):
 
     if availability_type == 'Consultation':
         body2 = f"""\
-            Dear {provider_name},
+<!DOCTYPE html>
+<html lang="fa">
 
-            We have received a new request for {availability_type}.
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاعیه جدید</title>
+    <style>
+        body {{
+            font-family: 'Tahoma', sans-serif;
+            direction: rtl;
+            background-color: #f6f6f6;
+            padding: 40px;
+        }}
+        .container {{
+            max-width: 600px;
+            background-color: #fff;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }}
+        h3, h4 {{
+            color: #34495e;
+        }}
+        ul {{
+            list-style-type: disc;
+            padding-inline-start: 40px;
+        }}
+        .highlight {{
+            font-weight: bold;
+            color: #2c3e50;
+        }}
+    </style>
+</head>
 
-            Ttime for {availability_type} is between {user_data['start_time']} and {user_data['end_time']} in central european time 
-            Time for {availability_type} is between  {convert_and_subtract_60_mins(user_data['start_time'])} and {convert_and_subtract_60_mins(user_data['end_time'])} in Tehran Time.
-            The Google Meet Link: {meet_link}
-            Here are the details that the client provided us:
+<body>
+    <div class="container">
+        <h3>عزیز {provider_name},</h3>
+        <p>ما یک درخواست جدید برای {availability_type} دریافت کرده‌ایم.</p>
+        <p>زمان برای {availability_type} بین {user_data['start_time']} تا {user_data['end_time']} بر حسب زمان هلند است.</p>
+        <p>زمان برای {availability_type} بین {convert_and_subtract_60_mins(user_data['start_time'])} تا {convert_and_subtract_60_mins(user_data['end_time'])} بر حسب زمان تهران است.</p>
+        <p>لینک گوگل میت: {meet_link}</p>
+        <h4>جزئیات ارسال شده توسط درخواست دهنده خدمت به شرح زیر است:</h4>
+        <ul>
+            <li>نام: {user_data['name']}</li>
+            <li>نوع وقت: {availability_type}</li>
+            <li>شماره تلگرام: {user_data['phone']}</li>
+            <li>سن: {user_data['age']}</li>
+            <li>هدف از تعیین وقت: {user_data['goal']}</li>
+            <li>آدرس ایمیل: {user_data['email']}</li>
+            <li>هدف از مهاجرت: {user_data['sop']}</li>
+            <li>وضعیت تحصیلی: {user_data['education']}</li>
+            <li>تجربه کاری: {user_data['working_experience']}</li>
+            <li>کشورهای مورد نظر: {user_data['country']}</li>
+            <li>وضعیت تاهل: {user_data['married_status']}</li>
+            <li>وضعیت نظام وظیفه: {user_data['military_service']}</li>
+            <li>گواهی زبان: {user_data['language_certificate']}</li>
+        </ul>
+        <p>از وقتی که می‌گذارید متشکریم.</p>
+        <p>با احترام,<br>
+        پشتیبانی ایستگاه یکم</p>
+    </div>
+</body>
 
-            - Name: {user_data['name']}
-            - Type of Appointment: {availability_type}
-            - Phone (Telegram Number): {user_data['phone']}
-            - Age: {user_data['age']}
-            - Goal of making Appointment: {user_data['goal']}
-            - Email: {user_data['email']}
-            - Goal of Migration: {user_data['sop']}
-            - Education Status: {user_data['education']}
-            - Working Experience: {user_data['working_experience']}
-            - Aim Countries: {user_data['country']}
-            - Married Status: {user_data['married_status']}
-            - Military Service Status: {user_data['military_service']}
-            - Language Certificate: {user_data['language_certificate']}
+</html>
+"""
 
-            Thanks for your time.
 
-            Best regards,
-            First September Support
-            """
     else:
         body2 = f"""\
-            Dear {provider_name},
+<!DOCTYPE html>
+<html lang="fa">
 
-            We have received a new request for {availability_type}.
-            We asked the clint to send the required documents as a reply to this email at September First official email.
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اطلاعیه جدید</title>
+    <style>
+        body {{
+            font-family: 'Tahoma', sans-serif;
+            direction: rtl;
+            background-color: #f6f6f6;
+            padding: 40px;
+        }}
+        .container {{
+            max-width: 600px;
+            background-color: #fff;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }}
+        h3, h4 {{
+            color: #34495e;
+        }}
+        ul {{
+            list-style-type: disc;
+            padding-inline-start: 40px;
+        }}
+        .highlight {{
+            font-weight: bold;
+            color: #2c3e50;
+        }}
+    </style>
+</head>
 
-            Here are the details that the client provided us:
+<body>
+    <div class="container">
+        <h3>عزیز {provider_name},</h3>
+        <p>ما یک درخواست جدید برای {availability_type} دریافت کرده‌ایم.</p>
+        <p>از درخواست کننده خدمت خواسته‌ایم تا مدارک مورد نیاز را به عنوان پاسخ به این ایمیل به ایمیل رسمی ایستگاه یکم ارسال کند.</p>
+        <h4>جزئیات ارسال شده توسط درخواست دهنده خدمت به شرح زیر است:</h4>
+        <ul>
+            <li>نام: {user_data['name']}</li>
+            <li>نوع وقت: {availability_type}</li>
+            <li>شماره تلگرام: {user_data['phone']}</li>
+            <li>سن: {user_data['age']}</li>
+            <li>هدف از تعیین وقت: {user_data['goal']}</li>
+            <li>آدرس ایمیل: {user_data['email']}</li>
+            <li>هدف از مهاجرت: {user_data['sop']}</li>
+            <li>وضعیت تحصیلی: {user_data['education']}</li>
+            <li>تجربه کاری: {user_data['working_experience']}</li>
+            <li>کشورهای مورد نظر: {user_data['country']}</li>
+            <li>وضعیت تاهل: {user_data['married_status']}</li>
+            <li>وضعیت نظام وظیفه: {user_data['military_service']}</li>
+            <li>گواهی زبان: {user_data['language_certificate']}</li>
+        </ul>
+        <p>از وقتی که می‌گذارید متشکریم.</p>
+        <p>با احترام,<br>
+        پشتیبانی ایستگاه یکم</p>
+    </div>
+</body>
 
-            - Name: {user_data['name']}
-            - Type of Appointment: {availability_type}
-            - Phone (Telegram Number): {user_data['phone']}
-            - Age: {user_data['age']}
-            - Goal of making Appointment: {user_data['goal']}
-            - Email: {user_data['email']}
-            - Goal of Migration: {user_data['sop']}
-            - Education Status: {user_data['education']}
-            - Working Experience: {user_data['working_experience']}
-            - Aim Countries: {user_data['country']}
-            - Married Status: {user_data['married_status']}
-            - Military Service Status: {user_data['military_service']}
-            - Language Certificate: {user_data['language_certificate']}
+</html>
+"""
 
-            Thanks for your time.
 
-            Best regards,
-            First September Support
-            """
-    # Create an EmailMessage object
-    message2 = EmailMessage()
-    message2.set_content(body2)
-    # text = MIMEText(body2, "plain", "utf-8")
-    # message2.attach(text)
-    message2['Subject'] = "New Appointment"
+    # # Create an EmailMessage object
+    # message2 = EmailMessage()
+    # message2.set_content(body2)
+    # # text = MIMEText(body2, "plain", "utf-8")
+    # # message2.attach(text)
+    # message2['Subject'] = "New Appointment"
+    # message2['From'] = smtp_username
+
+    message2 = MIMEMultipart()
+    # message.set_content(body)
+    html2 = MIMEText(body2, "html")
+    message2.attach(html2)
+    message2['Subject'] = f"New Appointment"
     message2['From'] = smtp_username
 
 
@@ -452,6 +556,163 @@ def send_email(user_data):
         server.send_message(message2)
     # save_appointment(user_data, availability_type, user_data['start_time'].strftime("%m/%d/%Y, %H:%M:%S"), user_data['end_time'].strftime("%m/%d/%Y, %H:%M:%S"))
     save_appointment(user_data)
+
+
+def check_and_send_surveys_from_sample():
+    # Load the JSON data
+    with open('data.json', 'r') as file:
+        data = json.load(file)
+
+    amsterdam = pytz.timezone('Europe/Amsterdam')
+    current_time = datetime.now(amsterdam)
+    print(current_time)
+
+    # Track whether the file needs to be updated
+    update_required = False
+
+    # Check each record
+    for entry in data:
+        for key, record in entry.items():
+            if record['Type of Appointment'] == "Consultation":
+                if not record['survey status']:
+                    end_time_str = record['End Time']
+                    naive_end_time = datetime.strptime(end_time_str, '%m/%d/%Y, %H:%M:%S')
+
+                    # Convert the naive_end_time to timezone-aware
+                    end_time = amsterdam.localize(naive_end_time)
+
+                    if (current_time - end_time) > timedelta(minutes=10):
+                        print("survey must send now:)")
+                        send_survey_email(record['Email'], record['Name'], record['client_id'])
+                        record['survey status'] = True
+                        update_required = True
+            else:
+                if not record['survey status']:
+                    end_time_str = record['Reserved Time']
+                    naive_end_time = datetime.strptime(end_time_str, '%m/%d/%Y, %H:%M:%S')
+
+                    # Convert the naive_end_time to timezone-aware
+                    end_time = amsterdam.localize(naive_end_time)
+
+                    if (current_time - end_time) > timedelta(minutes=720):
+                        print("survey must send now:)")
+                        send_survey_email(record['Email'], record['Name'], record['client_id'])
+                        record['survey status'] = True
+                        update_required = True
+
+    # Save changes to the JSON file if any updates were made
+    if update_required:
+        with open('data.json', 'w') as file:
+            json.dump(data, file, indent=4)
+
+def send_survey_email(email_address, Name, client_id):
+    smtp_server = 'smtp.porkbun.com'
+    smtp_port = 587
+    smtp_username = 'support@septemberfirst.org'
+    smtp_password = '#Septemberfirst2023'
+
+    # Create an EmailMessage object
+    message = MIMEMultipart()
+    body = f"""<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Template</title>
+    <style>
+        body {{
+            background-color: #f6f6f6;
+            padding: 40px;
+        }}
+
+        .container {{
+            direction: rtl;
+            max-width: 600px;
+            background-color: #fff;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }}
+
+        .header {{
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+
+        .content {{
+            margin-bottom: 20px;
+        }}
+
+        .footer {{
+            text-align: center;
+        }}
+
+        .highlight {{
+            font-weight: bold;
+            color: #2a7bf3;
+        }}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ایمیل از تیم ایستگاه یکم</h2>
+        </div>
+        <div class="content">
+            <p><span class="highlight">{Name}</span> عزیز،</p>
+            <p>
+                خوشحالیم که تونستیم در ایستگاه یکم مهاجرتت، تجربیاتمون رو باهات به اشتراک بگذاریم. با پرکردن نظرسنجی زیر، بهمون کمک میکنی تا در آینده، بهتر بهت کمک کنیم. تمام چیزهایی که اینجا مینویسی کاملا محرمانه است و صرفا به دست ما میرسه تا بر کار اعضای تیم نظارت داشته باشیم. هویت تو کاملا ناشناس، و ایمیلت برای ما مخفی خواهد بود.
+            </p>
+            <p>
+                برای محرمانه نگه داشتن پرسشنامه ما ازت اسم و یا ایمیل نمیخوایم وتنها لازم هست که کدی که در پایین درج شده رو به عنوان شناسه در پرسشنامه برامون وارد کنی.
+            </p>
+            <p>شناسه: <span class="highlight">{client_id}</span></p>
+            <p>لینک نظرسنجی: <span class="highlight">https://forms.gle/R4i65jnmigiJFg9d6</span></p>
+            <p>
+                برات آرزوی موفقیت داریم و اگر مجدد نیاز داشتی که گپ و گفت داشته باشیم لطفا از طریق بات ما اقدام کن.
+            </p>
+        </div>
+        <div class="footer">
+            <p>پیشاپیش از وقتی که برای پر کردن نظرسنجی میذاری ازت ممنونیم.</p>
+            <p><strong>ارادتمند</strong></p>
+            <p>تیم ایستگاه یکم</p>
+        </div>
+    </div>
+</body>
+
+</html>
+"""
+
+    html = MIMEText(body, "html")
+    message.attach(html)
+    message['Subject'] = "Survey"
+    message['From'] = smtp_username
+    message['To'] = email_address
+    # Connect to the SMTP server and send the email
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.send_message(message)
+
+
+
+
+
+
+
+
+
+scheduler2.add_job(
+    check_and_send_surveys_from_sample,
+    trigger='interval',
+    minutes=1,
+    timezone=pytz.utc
+)
+
 
 
 def start(update: Update, context: CallbackContext) -> int:
@@ -666,12 +927,14 @@ def availability(update: Update, context: CallbackContext) -> int:
         )
         return ConversationHandler.END  # End the conversation if there are no available slots
 
+with open('data.json', 'r') as file:
+    data = json.load(file)
 
 
 
 def run_bot():
     # updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
-    updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
+    updater = Updater("6037586217:AAEfPzmxgGFGIjknA73fq4tRC6IPTt0KYTs", use_context=True)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -773,20 +1036,14 @@ scheduler.add_job(
     minutes=10,
     timezone=pytz.utc
 )
-# FeedbackScheduler.add_job(
-#     id='FeedbackScheduler_job',
-#     func=remove_expired_availability,
-#     trigger='interval',
-#     minutes=10,
-#     timezone=pytz.utc
-#
-# )
+
 
 def run_app():
     with app.app_context():
         db.create_all()
     scheduler.init_app(app)
     scheduler.start()
+    scheduler2.start()
     app.run(debug=False)
 
 
