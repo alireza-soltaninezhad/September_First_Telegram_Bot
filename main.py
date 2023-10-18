@@ -594,7 +594,7 @@ def check_and_send_surveys_from_sample():
                     # Convert the naive_end_time to timezone-aware
                     end_time = amsterdam.localize(naive_end_time)
 
-                    if (current_time - end_time) > timedelta(minutes=720):
+                    if (current_time - end_time) > timedelta(days=5):
                         print("survey must send now:)")
                         send_survey_email(record['Email'], record['Name'], record['client_id'])
                         record['survey status'] = True
