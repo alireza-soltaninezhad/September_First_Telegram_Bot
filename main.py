@@ -71,7 +71,7 @@ class Availability(db.Model):
     provider_id = db.Column(db.Integer, db.ForeignKey('service_provider.id'), nullable=False)
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
-    availability_type = db.Column(db.String(50), nullable=False)  # Added this line
+    availability_type = db.Column(db.String(50), nullable=False)
     service_provider = db.relationship('ServiceProvider', backref=db.backref('availabilities', lazy=True))
 
 
@@ -188,18 +188,23 @@ def convert_and_subtract_60_mins(dt_obj):
 
 
 def send_email(user_data):
+    meet_links = {
+
+        'amin': 'https://meet.google.com/cyw-dhay-tsm',
+        'mahdis': 'https://meet.google.com/fsd-mqrb-aas?hs=187&authuser=0&ijlm=1693426810041&adhoc=1',
+        'alireza': 'https://meet.google.com/vbu-temi-wwz',
+        'maryam': 'https://meet.google.com/tjt-whuc-ybs',
+        'faezeh': 'https://meet.google.com/tge-qqbo-anv',
+        'soheil': 'https://meet.google.com/ufr-stss-jcm',
+        'soroush': 'https://meet.google.com/tot-hzsc-xpc'
+    }
 
     provider_name = user_data['provider_name']
-    availability_type = user_data['availability_type']
-    meet_link = ''
-    if provider_name.lower() == 'amin':
-        meet_link = 'https://meet.google.com/cyw-dhay-tsm'
-    if provider_name.lower() == 'mahdis':
-        meet_link = 'https://meet.google.com/fsd-mqrb-aas?hs=187&authuser=0&ijlm=1693426810041&adhoc=1'
-    if provider_name.lower() == 'alireza':
-        meet_link = 'https://meet.google.com/vbu-temi-wwz'
-    if provider_name.lower() == 'maryam':
-        meet_link = 'https://meet.google.com/tjt-whuc-ybs'
+    availability_type = user_data[
+        'availability_type']
+
+    # Look up the meet link in the dictionary
+    meet_link = meet_links.get(provider_name.lower(), '')
 
     print(availability_type)
     print(provider_name)
@@ -541,14 +546,38 @@ def send_email(user_data):
     message2['From'] = smtp_username
 
 
-    if provider_name.lower()=='amin':
-        message2['To'] = 'aminsinichi@gmail.com'
-    if  provider_name.lower()=='maryam':
-        message2['To'] = 'isf.torabimaryam@gmail.com'
-    if  provider_name.lower()=='mahdis':
-        message2['To'] = 'smmahdis2080@gmail.com'
-    if  provider_name.lower()=='alireza':
-        message2['To'] = 'ar.soltaninezhad@gmail.com'
+    # if provider_name.lower()=='amin':
+    #     message2['To'] = 'aminsinichi@gmail.com'
+    # if  provider_name.lower()=='maryam':
+    #     message2['To'] = 'isf.torabimaryam@gmail.com'
+    # if  provider_name.lower()=='mahdis':
+    #     message2['To'] = 'smmahdis2080@gmail.com'
+    # if  provider_name.lower()=='alireza':
+    #     message2['To'] = 'ar.soltaninezhad@gmail.com'
+    # if  provider_name.lower()=='Faezeh':
+    #     message2['To'] = 'faezehmohammadi97@yahoo.com'
+    # if provider_name.lower()=='Soheil':
+    #     message2['To'] = 'Soheilazaripoor@gmail.com'
+    # if provider_name.lower()=='Soheil':
+    #     message2['To'] = 'Soheilazaripoor@gmail.com'
+    # if provider_name.lower()=='Soroush':
+    #     message2['To'] = 'verdisoroush@gmail.com'
+    email_mapping = {
+        'amin': 'aminsinichi@gmail.com',
+        'maryam': 'isf.torabimaryam@gmail.com',
+        'mahdis': 'smmahdis2080@gmail.com',
+        'alireza': 'ar.soltaninezhad@gmail.com',
+        'faezeh': 'faezehmohammadi97@yahoo.com',
+        'soheil': 'Soheilazaripoor@gmail.com',
+        'soroush': 'verdisoroush@gmail.com'
+    }
+
+    # Convert provider_name to lowercase and look up in the dictionary
+    email = email_mapping.get(provider_name.lower())
+
+    if email:
+        message2['To'] = email
+
     # Connect to the SMTP server
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()  # You can use server.login() if using SSL
