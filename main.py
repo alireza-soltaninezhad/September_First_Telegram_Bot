@@ -206,6 +206,16 @@ def send_email(user_data):
     # Look up the meet link in the dictionary
     meet_link = meet_links.get(provider_name.lower(), '')
 
+    provider_name_to_persian = {
+        'amin': 'امین',
+        'mahdis': 'مهدیس',
+        'alireza': 'علیرضا',
+        'maryam': 'مریم',
+        'faezeh': 'فائزه',
+        'soheil': 'سهیل',
+        'soroush': 'سروش'
+    }
+
     print(availability_type)
     print(provider_name)
 
@@ -366,7 +376,7 @@ def send_email(user_data):
     # message.set_content(body)
     html = MIMEText(body, "html")
     message.attach(html)
-    message['Subject'] = f"New Appointment | Appointment ID {email_to_5_digit(user_data['email'])} | {provider_name}"
+    message['Subject'] = f"New Appointment | {provider_name_to_persian.get(provider_name)} | Appointment ID {email_to_5_digit(user_data['email'])}"
     message['From'] = smtp_username
     message['To'] = user_data['email']
 
@@ -429,7 +439,7 @@ def send_email(user_data):
 
 <body>
     <div class="container">
-        <h3>عزیز {provider_name},</h3>
+        <h3>عزیز {provider_name_to_persian.get(provider_name)},</h3>
         <p>ما یک درخواست جدید برای {availability_type} دریافت کرده‌ایم.</p>
         <p>زمان برای {availability_type} بین {user_data['start_time']} تا {user_data['end_time']} بر حسب زمان هلند است.</p>
         <p>زمان برای {availability_type} بین {convert_and_subtract_60_mins(user_data['start_time'])} تا {convert_and_subtract_60_mins(user_data['end_time'])} بر حسب زمان تهران است.</p>
@@ -501,7 +511,7 @@ def send_email(user_data):
 
 <body>
     <div class="container">
-        <h3>عزیز {provider_name},</h3>
+        <h3>عزیز {provider_name_to_persian.get(provider_name)},</h3>
         <p>ما یک درخواست جدید برای {availability_type} دریافت کرده‌ایم.</p>
         <p>از درخواست کننده خدمت خواسته‌ایم تا مدارک مورد نیاز را به عنوان پاسخ به این ایمیل به ایمیل رسمی ایستگاه یکم ارسال کند.</p>
         <h4>جزئیات ارسال شده توسط درخواست دهنده خدمت به شرح زیر است:</h4>
