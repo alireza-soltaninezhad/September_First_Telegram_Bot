@@ -55,17 +55,14 @@ db = SQLAlchemy(app)
 
 TIME, AVAILABILITY, NAME, PHONE, GOAL, EMAIL, SOP, COUNTRY, AGE, EDUCATION, CONFIRM, MARRIED_STATUS, MILITARY_SERVICE, WORKING_EXPERIENCE, LANGUAGE_CERTIFICATE = range(15)
 
-
 smtp_server = 'smtp.porkbun.com'
 smtp_port = 587
 smtp_username = 'support@septemberfirst.org'
 smtp_password = '#Septemberfirst2023'
 
-
 class ServiceProvider(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
-
 
 class Availability(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +71,6 @@ class Availability(db.Model):
     end_time = db.Column(db.DateTime)
     availability_type = db.Column(db.String(50), nullable=False)
     service_provider = db.relationship('ServiceProvider', backref=db.backref('availabilities', lazy=True))
-
 
 class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -94,7 +90,6 @@ def email_to_5_digit(email):
     # Use a portion of the hash to get a 5-digit number
     number = int(result[:8], 16) % 100000  # Taking the first 8 characters of the hash and mod by 100000
     return number
-
 
 def save_appointment(user_data):
     client_id = email_to_5_digit(user_data['email'])
@@ -184,8 +179,6 @@ def convert_and_subtract_60_mins(dt_obj):
     persian_datetime_str = f"{dt_obj_jalali.strftime('%Y-%m-%d')}, {dt_obj_tehran.strftime('%H:%M:%S')}"
 
     return persian_datetime_str
-
-
 
 
 def send_email(user_data):
@@ -734,8 +727,6 @@ def send_survey_email(email_address, Name, client_id):
 
 
 
-
-
 scheduler2.add_job(
     check_and_send_surveys_from_sample,
     trigger='interval',
@@ -798,12 +789,10 @@ def name(update: Update, context: CallbackContext) -> int:
     update.message.reply_text('شماره تماست به انگلیسی رو وارد کن (ترجیحا شماره‌ای که باهاش تلگرام داری)')
     return PHONE
 
-
 def phone(update: Update, context: CallbackContext) -> int:
     context.user_data['phone'] = update.message.text
     update.message.reply_text('قصد داری ازین گپ‌وگفت یا ارزیابی مدارکت چی عایدت بشه؟ \nاز انتظاراتی که داری برامون بنویس: ')
     return GOAL
-
 
 def goal(update: Update, context: CallbackContext) -> int:
     context.user_data['goal'] = update.message.text
@@ -811,7 +800,6 @@ def goal(update: Update, context: CallbackContext) -> int:
     return EMAIL
 
 EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
-
 
 def email(update: Update, context: CallbackContext) -> int:
     user_email = update.message.text
@@ -822,7 +810,6 @@ def email(update: Update, context: CallbackContext) -> int:
         context.user_data['email'] = user_email
         update.message.reply_text('هدفت از مهاجرت کردن چیه؟\n قصد داری تحصیلی اقدام کنی، کاری یا روش‌های دیگه؟ \nقصد داری توی کشور مقصد بمونی (اقامت بگیری؟). \nاینجا اینطور نکاتی که می‌تونه به ما در فهم هدفت از مهاجرت کمک کنه رو در قالب یک پیام بنویس: ')
         return SOP
-
 
 def married_status(update: Update, context: CallbackContext) -> int:
     context.user_data['married_status'] = update.message.text
@@ -890,7 +877,6 @@ def confirm(update: Update, context: CallbackContext) -> int:
 
     return ConversationHandler.END
 
-
 def cancel(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
     update.message.reply_text(
@@ -898,7 +884,6 @@ def cancel(update: Update, context: CallbackContext) -> int:
         reply_markup=ReplyKeyboardRemove()
     )
     return ConversationHandler.END
-
 
 def button(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -924,7 +909,6 @@ def button(update: Update, context: CallbackContext):
         else:
             query.edit_message_text(text="متأسفیم، این بازه زمانی دیگر در دسترس نیست.")
             return ConversationHandler.END
-
 
 def availability(update: Update, context: CallbackContext) -> int:
     with app.app_context():
@@ -961,10 +945,9 @@ with open('data.json', 'r') as file:
     data = json.load(file)
 
 
-
 def run_bot():
     # updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
-    updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
+    updater = Updater("6037586217:AAEfPzmxgGFGIjknA73fq4tRC6IPTt0KYTs", use_context=True)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -996,11 +979,9 @@ def run_bot():
     updater.start_polling()
     updater.idle()
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/provider/availability', methods=['POST'])
 def set_availability():
@@ -1027,8 +1008,6 @@ def set_availability():
     db.session.commit()
 
     return 'Availability set successfully'
-
-
 
 def remove_expired_availability():
     with app.app_context():
@@ -1067,6 +1046,28 @@ scheduler.add_job(
     timezone=pytz.utc
 )
 
+@app.route('/provider_times', methods=['GET', 'POST'])
+def provider_times():
+    if request.method == 'POST':
+        provider_name = request.form['provider_name']
+        provider = ServiceProvider.query.filter_by(name=provider_name).first()
+
+        if provider:
+            times = Availability.query.filter_by(provider_id=provider.id).all()
+        else:
+            times = []
+
+        return render_template('provider_times.html', times=times, provider_name=provider_name)
+
+    return render_template('provider_times.html', times=None)
+
+
+@app.route('/delete_availability/<int:id>', methods=['GET'])
+def delete_availability(id):
+    availability = Availability.query.get_or_404(id)
+    db.session.delete(availability)
+    db.session.commit()
+    return redirect(url_for('provider_times'))
 
 def run_app():
     with app.app_context():

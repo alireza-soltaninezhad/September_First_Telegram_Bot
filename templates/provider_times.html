@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Availability</title>
+</head>
+<body>
+    <form action="/provider_times" method="post">
+        <label for="provider_name">Provider Name:</label>
+        <input type="text" id="provider_name" name="provider_name">
+        <input type="submit" value="Retrieve Availability">
+    </form>
+
+    {% if times %}
+    <h2>Available Times for {{ provider_name }}</h2>
+    <ul>
+        {% for time in times %}
+        <li>
+            {{ time.start_time }} - {{ time.end_time }}
+            <a href="{{ url_for('delete_availability', id=time.id) }}">Delete</a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+</html>
