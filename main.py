@@ -39,6 +39,18 @@ from flask_apscheduler import APScheduler
 import schedule
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import and_
+# import pymongo
+#
+#
+#
+# myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+#
+# mydb = myclient["mydatabase"]
+#
+# print(myclient.list_database_names())
+
+
+
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -184,13 +196,14 @@ def convert_and_subtract_60_mins(dt_obj):
 def send_email(user_data):
 
     meet_links = {
-        'amin': 'https://meet.google.com/cyw-dhay-tsm',
-        'mahdis': 'https://meet.google.com/fsd-mqrb-aas?hs=187&authuser=0&ijlm=1693426810041&adhoc=1',
-        'alireza': 'https://meet.google.com/vbu-temi-wwz',
-        'maryam': 'https://meet.google.com/tjt-whuc-ybs',
-        'faezeh': 'https://meet.google.com/tge-qqbo-anv',
-        'soheil': 'https://meet.google.com/ufr-stss-jcm',
-        'soroush': 'https://meet.google.com/tot-hzsc-xpc'
+        'Amin Sinechi': 'https://meet.google.com/cyw-dhay-tsm',
+        'Mahdis': 'https://meet.google.com/fsd-mqrb-aas?hs=187&authuser=0&ijlm=1693426810041&adhoc=1',
+        'Alireza': 'https://meet.google.com/vbu-temi-wwz',
+        'Maryam': 'https://meet.google.com/tjt-whuc-ybs',
+        'Faezeh': 'https://meet.google.com/tge-qqbo-anv',
+        'Soheil': 'https://meet.google.com/ufr-stss-jcm',
+        'Soroush': 'https://meet.google.com/tot-hzsc-xpc',
+        'Amin Fakhr Mohammadi': 'https://meet.google.com/twf-qozy-fdp'
     }
 
     provider_name = user_data['provider_name']
@@ -557,13 +570,14 @@ def send_email(user_data):
     # if provider_name.lower()=='Soroush':
     #     message2['To'] = 'verdisoroush@gmail.com'
     email_mapping = {
-        'amin': 'aminsinichi@gmail.com',
+        'Amin Sinechi': 'aminsinichi@gmail.com',
         'maryam': 'isf.torabimaryam@gmail.com',
         'mahdis': 'smmahdis2080@gmail.com',
         'alireza': 'ar.soltaninezhad@gmail.com',
         'faezeh': 'faezehmohammadi97@yahoo.com',
         'soheil': 'Soheilazaripoor@gmail.com',
-        'soroush': 'verdisoroush@gmail.com'
+        'soroush': 'verdisoroush@gmail.com',
+        'Amin Fakhr Mohammadi': 'amin.fakhr.74@gmail.com'
     }
 
     # Convert provider_name to lowercase and look up in the dictionary
