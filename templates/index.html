@@ -1,45 +1,123 @@
+{#<!DOCTYPE html>#}
+{#<html>#}
+{#<head>#}
+{#  <title>Set Availability</title>#}
+{#  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">#}
+{#</head>#}
+{#<body>#}
+{#  <div class="container mt-5">#}
+{#    <h1 class="text-center">Set Availability</h1>#}
+{#    <form action="/provider/availability" method="post" class="mt-4">#}
+{#      <div class="row">#}
+{#        <div class="col-md-6 mb-3">#}
+{#          <label for="provider_name">Provider Name:</label>#}
+{#          <select class="form-control" id="provider_name" name="provider_name" aria-describedby="providerNameHelp">#}
+{#            <option value="">--Please choose an option--</option>#}
+{#            <!-- Add options here -->#}
+{#          </select>#}
+{#          <small id="providerNameHelp" class="form-text text-muted">Select your name from the list.</small>#}
+{#        </div>#}
+{#        <div class="col-md-6 mb-3" id="timeFields">#}
+{#          <div>#}
+{#            <label for="start_time">Start Time:</label>#}
+{#            <input type="datetime-local" class="form-control" id="start_time" name="start_time">#}
+{#          </div>#}
+{#          <div class="mt-3">#}
+{#            <label for="end_time">End Time:</label>#}
+{#            <input type="datetime-local" class="form-control" id="end_time" name="end_time">#}
+{#          </div>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="form-group">#}
+{#        <label for="type_of_appointment">Type of Appointment:</label>#}
+{#        <select class="form-control" id="type_of_appointment" name="type_of_appointment" onchange="toggleTimeFields()">#}
+{#          <option value="Consultation">Consultation</option>#}
+{#          <option value="Check Documents and Ask Questions">Check Documents and Ask Questions</option>#}
+{#        </select>#}
+{#      </div>#}
+{##}
+{#      <button type="submit" class="btn btn-primary">Submit</button>#}
+{#    </form>#}
+{#  </div>#}
+{##}
+{#  <script>#}
+{#    function toggleTimeFields() {#}
+{#      const typeOfAppointment = document.getElementById('type_of_appointment').value;#}
+{#      const timeFields = document.getElementById('timeFields');#}
+{#      if (typeOfAppointment === 'Consultation') {#}
+{#        timeFields.style.display = 'block';#}
+{#      } else {#}
+{#        timeFields.style.display = 'none';#}
+{#      }#}
+{#    }#}
+{#    toggleTimeFields();#}
+{#  </script>#}
+{##}
+{#  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>#}
+{#  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>#}
+{#  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>#}
+{#</body>#}
+{#</html>#}
+
 <!DOCTYPE html>
 <html>
 <head>
   <title>Set Availability</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 </head>
 <body>
   <div class="container mt-5">
-    <h1 class="text-center">Set Availability</h1>
-    <form action="/provider/availability" method="post" class="mt-4">
+    <h1 class="text-center text-primary mb-4">Set Availability</h1>
+    <form action="/provider/availability" method="post" class="border p-4 shadow">
       <div class="form-group">
-        <label for="provider_name">Provider Name:</label>
-        <select   class="form-control" id="provider_name" name="provider_name" >
-              <option value="">--Please choose an option--</option>
-              <option value="Amin Sinechi">Amin Sinechi</option>
-              <option value="Maryam">Maryam</option>
-              <option value="Mahdis">Mahdis</option>
-              <option value="Soheil">Soheil</option>
-              <option value="Soroush">Soroush</option>
-              <option value="Faezeh">Faezeh</option>
-              <option value="Alireza">Alireza</option>
-              <option value="Amin Fakhr Mohammadi">Amin Fakhr Mohammadi</option>
-        </select>
+        <label for="provider_name" class="font-weight-bold">Provider Name:</label>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-info text-white"><i class="fas fa-user"></i></span>
+          </div>
+          <select class="form-control" id="provider_name" name="provider_name">
+            <option value="">--Please choose an option--</option>
+            <option value="Amin Sinichi">Amin Sinichi</option>
+            <option value="Maryam">Maryam</option>
+            <option value="Mahdis">Mahdis</option>
+            <option value="Soheil">Soheil</option>
+            <option value="Soroush">Soroush</option>
+            <option value="Faezeh">Faezeh</option>
+            <option value="Alireza">Alireza</option>
+            <option value="Amin Fakhr Mohammadi">Amin Fakhr Mohammadi</option>
+          </select>
+        </div>
       </div>
 
       <div class="form-group" id="timeFields">
-        <label for="start_time">Start Time:</label>
-        <input type="datetime-local" class="form-control" id="start_time" name="start_time">
+        <label for="start_time" class="font-weight-bold">Start Time:</label>
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-success text-white"><i class="fas fa-clock"></i></span>
+          </div>
+          <input type="datetime-local" class="form-control" id="start_time" name="start_time">
+        </div>
 
-        <label for="end_time">End Time:</label>
-        <input type="datetime-local" class="form-control" id="end_time" name="end_time">
+        <label for="end_time" class="font-weight-bold">End Time:</label>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text bg-danger text-white"><i class="fas fa-clock"></i></span>
+          </div>
+          <input type="datetime-local" class="form-control" id="end_time" name="end_time">
+        </div>
       </div>
 
       <div class="form-group">
-        <label for="type_of_appointment">Type of Appointment:</label>
+        <label for="type_of_appointment" class="font-weight-bold">Type of Appointment:</label>
         <select class="form-control" id="type_of_appointment" name="type_of_appointment" onchange="toggleTimeFields()">
           <option value="Consultation">Consultation</option>
           <option value="Check Documents and Ask Questions">Check Documents and Ask Questions</option>
         </select>
       </div>
 
-      <button type="submit" class="btn btn-primary">Submit</button>
+      <button type="submit" class="btn btn-primary btn-block">Submit <i class="fas fa-paper-plane"></i></button>
     </form>
   </div>
 
@@ -53,13 +131,12 @@
         timeFields.style.display = 'none';
       }
     }
-
-    // Call the function once to set the initial state
     toggleTimeFields();
   </script>
 
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js"></script>
 </body>
 </html>

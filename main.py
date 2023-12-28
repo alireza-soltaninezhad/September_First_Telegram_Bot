@@ -48,6 +48,15 @@ from sqlalchemy import and_
 # mydb = myclient["mydatabase"]
 #
 # print(myclient.list_database_names())
+import smtplib
+import datetime as dt
+import icalendar
+import pytz
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from datetime import timedelta
 
 
 
@@ -67,7 +76,7 @@ db = SQLAlchemy(app)
 
 TIME, AVAILABILITY, NAME, PHONE, GOAL, EMAIL, SOP, COUNTRY, AGE, EDUCATION, CONFIRM, MARRIED_STATUS, MILITARY_SERVICE, WORKING_EXPERIENCE, LANGUAGE_CERTIFICATE = range(15)
 
-smtp_server = 'smtp.porkbun.com'
+smtp_server = 'smtppro.zoho.eu'
 smtp_port = 587
 smtp_username = 'support@septemberfirst.org'
 smtp_password = '#Septemberfirst2023'
@@ -192,18 +201,54 @@ def convert_and_subtract_60_mins(dt_obj):
 
     return persian_datetime_str
 
-
+def create_calendar_part(cal):
+    filename = "invite.ics"
+    part = MIMEBase('text', "calendar", method="REQUEST", name=filename)
+    part.set_payload(cal.to_ical())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+    return part
 def send_email(user_data):
+    # Calendar Event Creation
+    if user_data['availability_type'] == 'Consultation':
+        tz = pytz.timezone("Europe/Amsterdam")
+        start = tz.localize(user_data['start_time'])
+        end = tz.localize(user_data['end_time'])
+        print(start,end)
+        cal = icalendar.Calendar()
+        cal.add('prodid', '-//My Calendar Application//example.com//')
+        cal.add('version', '2.0')
+        cal.add('method', "REQUEST")
+        event = icalendar.Event()
+        event.add('summary', 'Appointment with ' + user_data['provider_name'])
+        event.add('dtstart', start)
+        event.add('dtend', end)
+        event.add('uid', 'unique-event-id')  # Replace with a unique ID generator if available
+        cal.add_component(event)
+
+        # Create Calendar Attachment
+        filename = "invite.ics"
+        part = MIMEBase('text', "calendar", method="REQUEST", name=filename)
+        part.set_payload(cal.to_ical())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f'attachment; filename="{filename}"')
+        # Create Calendar Attachment for each message
+        calendar_part = create_calendar_part(cal)
+
+
+
+
+
 
     meet_links = {
-        'Amin Sinechi': 'https://meet.google.com/cyw-dhay-tsm',
-        'Mahdis': 'https://meet.google.com/fsd-mqrb-aas?hs=187&authuser=0&ijlm=1693426810041&adhoc=1',
-        'Alireza': 'https://meet.google.com/vbu-temi-wwz',
-        'Maryam': 'https://meet.google.com/tjt-whuc-ybs',
-        'Faezeh': 'https://meet.google.com/tge-qqbo-anv',
-        'Soheil': 'https://meet.google.com/ufr-stss-jcm',
-        'Soroush': 'https://meet.google.com/tot-hzsc-xpc',
-        'Amin Fakhr Mohammadi': 'https://meet.google.com/twf-qozy-fdp'
+        'amin sinichi': 'https://meet.google.com/cyw-dhay-tsm',
+        'mahdis': 'https://meet.google.com/ukr-dabx-mba',
+        'alireza': 'https://meet.google.com/vbu-temi-wwz',
+        'maryam': 'https://meet.google.com/tjt-whuc-ybs',
+        'faezeh': 'https://meet.google.com/tge-qqbo-anv',
+        'soheil': 'https://meet.google.com/ufr-stss-jcm',
+        'soroush': 'https://meet.google.com/tot-hzsc-xpc',
+        'amin fakhr mohammadi': 'https://meet.google.com/twf-qozy-fdp'
     }
 
     provider_name = user_data['provider_name']
@@ -376,7 +421,8 @@ def send_email(user_data):
     message['Subject'] = f"New Appointment | {provider_name} | Appointment ID {email_to_5_digit(user_data['email'])}"
     message['From'] = smtp_username
     message['To'] = user_data['email']
-
+    if availability_type == 'Consultation':
+        message.attach(calendar_part)
     with open("MaramName.pdf", "rb") as attachment:
         pdf_part = MIMEBase("application", "octet-stream")
         pdf_part.set_payload(attachment.read())
@@ -387,7 +433,6 @@ def send_email(user_data):
         )
         message.attach(pdf_part)
         print("PDF Read:)")
-
     # Connect to the SMTP server and send the email
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
@@ -570,14 +615,14 @@ def send_email(user_data):
     # if provider_name.lower()=='Soroush':
     #     message2['To'] = 'verdisoroush@gmail.com'
     email_mapping = {
-        'Amin Sinechi': 'aminsinichi@gmail.com',
+        'amin sinichi': 'aminsinichi@gmail.com',
         'maryam': 'isf.torabimaryam@gmail.com',
         'mahdis': 'smmahdis2080@gmail.com',
         'alireza': 'ar.soltaninezhad@gmail.com',
         'faezeh': 'faezehmohammadi97@yahoo.com',
         'soheil': 'Soheilazaripoor@gmail.com',
         'soroush': 'verdisoroush@gmail.com',
-        'Amin Fakhr Mohammadi': 'amin.fakhr.74@gmail.com'
+        'amin fakhr mohammadi': 'amin.fakhr.74@gmail.com'
     }
 
     # Convert provider_name to lowercase and look up in the dictionary
@@ -585,7 +630,8 @@ def send_email(user_data):
 
     if email:
         message2['To'] = email
-
+    if availability_type == 'Consultation':
+        message2.attach(calendar_part)
     # Connect to the SMTP server
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()  # You can use server.login() if using SSL
@@ -596,7 +642,7 @@ def send_email(user_data):
 
 
 def check_and_send_surveys_from_sample():
-    # Load the JSON data
+
     with open('data.json', 'r') as file:
         data = json.load(file)
 
@@ -604,7 +650,7 @@ def check_and_send_surveys_from_sample():
     current_time = datetime.now(amsterdam)
     print(current_time)
 
-    # Track whether the file needs to be updated
+
     update_required = False
 
     # Check each record
@@ -615,10 +661,10 @@ def check_and_send_surveys_from_sample():
                     end_time_str = record['End Time']
                     naive_end_time = datetime.strptime(end_time_str, '%m/%d/%Y, %H:%M:%S')
 
-                    # Convert the naive_end_time to timezone-aware
+
                     end_time = amsterdam.localize(naive_end_time)
 
-                    if (current_time - end_time) > timedelta(minutes=10):
+                    if (current_time - end_time) > timedelta(minutes=3):
                         print("survey must send now:)")
                         send_survey_email(record['Email'], record['Name'], record['client_id'])
                         record['survey status'] = True
@@ -628,10 +674,10 @@ def check_and_send_surveys_from_sample():
                     end_time_str = record['Reserved Time']
                     naive_end_time = datetime.strptime(end_time_str, '%m/%d/%Y, %H:%M:%S')
 
-                    # Convert the naive_end_time to timezone-aware
+
                     end_time = amsterdam.localize(naive_end_time)
 
-                    if (current_time - end_time) > timedelta(days=5):
+                    if (current_time - end_time) > timedelta(days = 5):
                         print("survey must send now:)")
                         send_survey_email(record['Email'], record['Name'], record['client_id'])
                         record['survey status'] = True
@@ -643,7 +689,7 @@ def check_and_send_surveys_from_sample():
             json.dump(data, file, indent=4)
 
 def send_survey_email(email_address, Name, client_id):
-    smtp_server = 'smtp.porkbun.com'
+    smtp_server = 'smtppro.zoho.eu'
     smtp_port = 587
     smtp_username = 'support@septemberfirst.org'
     smtp_password = '#Septemberfirst2023'
@@ -729,7 +775,6 @@ def send_survey_email(email_address, Name, client_id):
     message['Subject'] = "Survey"
     message['From'] = smtp_username
     message['To'] = email_address
-    # Connect to the SMTP server and send the email
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
         server.login(smtp_username, smtp_password)
@@ -960,8 +1005,8 @@ with open('data.json', 'r') as file:
 
 
 def run_bot():
-    # updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
-    updater = Updater("6037586217:AAEfPzmxgGFGIjknA73fq4tRC6IPTt0KYTs", use_context=True)
+    updater = Updater("6194360753:AAFsu2Fm4DkfKGlowfUJTLW9A-0Zsv6FLww", use_context=True)
+    #updater = Updater("6037586217:AAEfPzmxgGFGIjknA73fq4tRC6IPTt0KYTs", use_context=True)
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
